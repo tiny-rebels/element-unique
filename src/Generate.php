@@ -3,6 +3,7 @@
 namespace Element\Unique;
 
 use Element\Unique\Helpers\Software\LicenseKey;
+use Random\RandomException;
 
 /**
  * @property LicenseKey $softwareLicense
@@ -104,27 +105,22 @@ class Generate {
 
     /**
      * @return string
+     *
+     * @throws RandomException
      */
     public static function uuid4(): string {
 
-        return sprintf( '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
-            // 32 bits for "time_low"
-            mt_rand( 0, 0xffff ), mt_rand( 0, 0xffff ),
+        $randomBytes = random_bytes(16);
 
-            // 16 bits for "time_mid"
-            mt_rand( 0, 0xffff ),
+        // Set version to 0100 (UUID v4)
+        $randomBytes[6] = chr((ord($randomBytes[6]) & 0x0f) | 0x40);
 
-            // 16 bits for "time_hi_and_version",
-            // four most significant bits holds version number 4
-            mt_rand( 0, 0x0fff ) | 0x4000,
+        // Set variant to 10xxxxxx
+        $randomBytes[8] = chr((ord($randomBytes[8]) & 0x3f) | 0x80);
 
-            // 16 bits, 8 bits for "clk_seq_hi_res",
-            // 8 bits for "clk_seq_low",
-            // two most significant bits holds zero and one for variant DCE1.1
-            mt_rand( 0, 0x3fff ) | 0x8000,
-
-            // 48 bits for "node"
-            mt_rand( 0, 0xffff ), mt_rand( 0, 0xffff ), mt_rand( 0, 0xffff )
+        return vsprintf(
+            '%s%s-%s-%s-%s-%s%s%s',
+            str_split(bin2hex($randomBytes), 4)
         );
     }
 
